@@ -30,17 +30,20 @@ from pyspark import SparkContext
 # $example on$
 from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel
 from pyspark.mllib.util import MLUtils
+from pyspark.sql import SparkSession
 
 
 # $example off$
 
 if __name__ == "__main__":
 
-    sc = SparkContext(appName="PythonNaiveBayesExample")
+    spark = SparkSession.builder.master("local").appName("PythonNaiveBayesExample").config("spark.sql.warehouse.dir", "D:/work/python/spark_naive_bayes/spark").getOrCreate()
+
+    sc = spark.sparkContext
 
     # $example on$
     # Load and parse the data file.
-    data = MLUtils.loadLibSVMFile(sc, "data/mllib/sample_libsvm_data.txt")
+    data = MLUtils.loadLibSVMFile(sc, "D:\work\python\spark_naive_bayes\spark\data\mllib\sample_libsvm_data.txt")
 
     # Split data approximately into training (60%) and test (40%)
     training, test = data.randomSplit([0.6, 0.4])
@@ -54,7 +57,7 @@ if __name__ == "__main__":
     print('model accuracy {}'.format(accuracy))
 
     # Save and load model
-    output_dir = 'target/tmp/myNaiveBayesModel'
+    output_dir = 'output/'
     shutil.rmtree(output_dir, ignore_errors=True)
     model.save(sc, output_dir)
     sameModel = NaiveBayesModel.load(sc, output_dir)
@@ -62,4 +65,10 @@ if __name__ == "__main__":
     accuracy = 1.0 * predictionAndLabel.filter(lambda (x, v): x == v).count() / test.count()
     print('sameModel accuracy {}'.format(accuracy))
 
+    from pyspark.mllib.linalg import SparseVector
+    testsparsevector = SparseVector(692, [5, 6], [5.0, 6.0])
+
+    print(sameModel.predict(testsparsevector))
+
     # $example off$
+    sc.stop()
